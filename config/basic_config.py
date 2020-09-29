@@ -1,9 +1,9 @@
 #coding=utf-8
 class ConfigInit:
-    url = 'https://baconapi.lpi-china.com'
-    login_url = 'https://baconapi.lpi-china.com'
-    sendaddr_name = '1171499448@qq.com'
-    sendaddr_pswd = 'expfsnlwjyecjddj'
+    url = 'sssss'
+    login_url = 'sssss'
+    sendaddr_name = 'ssss'
+    sendaddr_pswd = 'ssss'
     data_filename = 'data.xls'
     mongo_ip_port = 'ip'
     mongo_user = 'root'
