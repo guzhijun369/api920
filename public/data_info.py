@@ -45,7 +45,10 @@ def get_test_case_data(data_info,testCaseName):
         if (list(data.keys())[0]) == testCaseName:
             getTestCaseDatadict = {}
             if 'send_data' in data[testCaseName]:
-                getTestCaseDatadict['send_data'] = ast.literal_eval(data[testCaseName]['send_data']) # 获取表中的send_data，即接口发送数据
+                if '{' in data[testCaseName]['send_data'] and '}' in data[testCaseName]['send_data']:
+                    getTestCaseDatadict['send_data'] = ast.literal_eval(data[testCaseName]['send_data']) # 获取表中的send_data，即接口发送数据
+                else:
+                    getTestCaseDatadict['send_data'] = data[testCaseName]['send_data']
             else:
                 getTestCaseDatadict['send_data'] = None
             getTestCaseDatadict['assert_info'] = ast.literal_eval(data[testCaseName]['assert_info']) # 获取表中的assert_info，即断言数据
