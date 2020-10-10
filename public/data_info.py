@@ -39,7 +39,12 @@ def get_excel_dict(path, index=0):
         paralList.append(dictTestCaseName)#将处理后的数据放入列表里
     return (paralList)
 
+false = False  # 用于转义send_data中存在的false,true,null，python中没有这种关键字，转成对应的
+true = True
+null = None
+
 def get_test_case_data(data_info,testCaseName):
+    global false, true, null
     testData = data_info
     getTestCaseDataList = []
     for data in testData:
@@ -176,7 +181,5 @@ def finddata(path=PATH, case_name=None, rely_parameter=None):
 # c = finddata(case_name=["新建课程"], rely_parameter=b)
 # print(c)
 data_info = get_excel_dict(PATH)
-# a = get_test_case_data(data_info, 'application_login')
-# pprint(a)
 # get_specific_num(PATH)
 
