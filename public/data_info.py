@@ -9,6 +9,7 @@ from xlutils.copy import copy
 from loguru import logger
 import json
 import pandas as pd
+from jsonpath import jsonpath
 from pprint import pprint
 
 
@@ -126,6 +127,30 @@ def json_exact_search(data, key):
     finally:
         logger.debug('————json方法：精确查找-结束————')
 
+        # 精确提取：data[][][]
+def data_exact_search(datas, key):
+    '''
+    :param data: 嵌套字典、列表；dict、list；示例：{'code':0,'data':[{'name':'a'},{'name':'b'},{'name':'c'}]}
+    :param key:  查找条件；str；示例："$.['data'][0]['name']"    ,jsonpath提取规则
+    :return: 结果 = a
+    '''
+    logger.info('————进入精确提取：data方式————')
+    if type(datas) != dict:
+        try:
+            datas = eval(datas)
+        except:
+            return None
+    data = datas
+    logger.debug('data方法：精确查找提取-数据源：%s,%s' % (type(data), data))
+    logger.info('data方法：精确查找提取-查找条件：%s,%s' % (type(key), key))
+    try:
+        res = jsonpath(data, key)[0]
+        logger.info('————data方法：精确查找提取-开始查找————%s,%s' % (type(res), str(res)))
+    except:
+        res = None
+        logger.debug('data方法：精确查找提取-查找失败:%s,%s' % (type(res), res))
+    return res
+
 def finddata(path=PATH, case_name=None, rely_parameter=None):
     # 获取文件指定行的res_data(获取返回接口数据),case_name是列表，多个接口返回列表
     '''
@@ -135,18 +160,19 @@ def finddata(path=PATH, case_name=None, rely_parameter=None):
     :return: resdata，列表，按顺序输出取到的所有依赖参数
     '''
     res_data = []
-    demo_df=pd.read_excel(path) ##文件路径
+    demo_df = pd.read_excel(path) ##文件路径
     for i in case_name:
-        for indexs in demo_df.index:
-            if (demo_df.loc[indexs].values[6] == i):  # 表中case_name 列在第七行，固定查找第七行用例名进行匹配，后期优化改成不写死列数
-                data = json.loads(demo_df.loc[indexs].values[11])  # 表中res_data 列在第12行，固定查找第12行返回数据进行匹配，后期优化改成不写死列数
-                rely_parameter_data = rely_parameter[i].split(',')
-                for parameter in rely_parameter_data:
-                    v = json_exact_search(data, parameter)
-                    # print("key--{} 查找到值为{}".format(parameter,v))
-                    res_data.append(v)
+        rely_parameter_data = rely_parameter[i].split(',')
+        # for indexs in demo_df.index:
+        #     if (demo_df.loc[indexs].values[6] == i):  # 表中case_name 列在第七行，固定查找第七行用例名进行匹配，后期优化改成不写死列数
+        #         data = json.loads(demo_df.loc[indexs].values[11])  # 表中res_data 列在第12行，固定查找第12行返回数据进行匹配，后期优化改成不写死列数
+        data = demo_df.loc[demo_df['case_name'] == i, ['res_data']].values[0][0]  # 优化后不再写死
+        for parameter in rely_parameter_data:
+            v = json_exact_search(data, parameter)
+            # print("key--{} 查找到值为{}".format(parameter,v))
+            res_data.append(v)
     return res_data
-# b = {'新建课程': 'json.data.id'}
+# b = {'新建课程': "$.['data']['id']"}
 # c = finddata(case_name=["新建课程"], rely_parameter=b)
 # print(c)
 data_info = get_excel_dict(PATH)

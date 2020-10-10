@@ -13,7 +13,7 @@ from public.mongo_utils import update_project_info, update_product
 
 path = os.path.join(globalparam.log_path,'test_{}.log'.format(time.strftime('%Y-%m-%d')))
 
-logger.add(path, level=globalparam.log_level)  # 日志初始化
+logger.add(path, level=globalparam.log_level, enqueue=True)  # 日志初始化
 
 def run(method, test=None):
     if method == 'all':

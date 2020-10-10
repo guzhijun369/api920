@@ -3,6 +3,7 @@ import requests
 import json
 import re
 from urllib import parse
+from jsonpath import jsonpath
 from loguru import logger
 from public.data_info import finddata, write_res
 
@@ -25,7 +26,7 @@ class SendRequest(object):
                          'code': '返回字节超过32767'}
         re_type_error = {
             'code': 10001,
-            'msg': '返回数据格式不是json，当前框架无法处理，请联系谷哥'
+            'msg': '返回数据格式不是json，当前框架无法处理，请联系框架开发者--谷哥'
         }
         if method == 'get':
             try:
@@ -66,16 +67,20 @@ class SendRequest(object):
                 re = requests.patch(url, headers=header)
             except Exception as e:
                 re = False
-        if re:
-            if len(json.dumps(re.json(), ensure_ascii=False)) < 32767:  # 当单返回数据长度超过32767,xlrd模块处理不了写入
-                if re.headers['Content-Type'] in 'application/json;charset=UTF-8':
-                    print('url:{}\r\nmethod:{}\r\nrequest_data:{}\r\nresponse:{}'.format(url, method, data, re.json()))
+        print('url:{}\r\nmethod:{}\r\nrequest_data:{}'.format(url, method, data))
+        if re and re.status_code == 200:
+            print('response_code: {}'.format(re.status_code))
+            if re.headers['Content-Type'] in 'application/json;charset=UTF-8':
+                if len(json.dumps(re.json(), ensure_ascii=False)) < 32767:  # 当单返回数据长度超过32767,xlrd模块处理不了写入
+                    print('response:{}'.format(re.json()))
                     return re.json()
                 else:
-                    return re_type_error
+                    return re_long_lenth
             else:
-                return re_long_lenth
+                print('response:{}'.format(re_type_error))
+                return re_type_error
         else:
+            print('response_code: {}'.format(re.status_code))
             print('url:{}\r\nmethod:{}\r\nrequest_data:{}\r\nresponse:{}'.format(url, method, data, '请求失败'))
             return re_error
 
@@ -109,7 +114,7 @@ class SendRequest(object):
                 k_v_list = self.construct_dict(keys, values)  # 组成替换参数字典{"参数标示":"提取到的值"}
                 send_data = self.update_data2(send_data, [k_v_list])  # 替换发送的数据
                 r = self.send_request(method, url=url, data=send_data, header=self.headers)
-            elif method == 'get':
+            else:
                 url = self.replace_str(url, keys[0], values)
                 r = self.send_request(method, url=url, data=send_data, header=self.headers)
         write_res(rownum, json.dumps(r, indent=2, ensure_ascii=False))  # 写入返回值
@@ -159,7 +164,7 @@ class SendRequest(object):
             except:
                 return None
         logger.debug('————json方法：精确查找提取-数据源：%s,%s' % (type(data), data))
-        logger.debug('————json方法：精确查找提取-查找条件：%s,%s' % (type(key), key))
+        logger.info('————json方法：精确查找提取-查找条件：%s,%s' % (type(key), key))
         k_list = key.split('.')
         k_list.pop(0)
         try:
@@ -172,7 +177,7 @@ class SendRequest(object):
                 logger.debug('————json方法：精确查找提取-提取后数据源：%s,%s' % (type(key), key))
                 v = data[i]
                 data = v
-            logger.debug('————json方法：精确查找-提取值：————%s,%s' % (type(v), v))
+            logger.info('————json方法：精确查找-提取值：————%s,%s' % (type(v), v))
             return v
         except Exception as e:
             logger.debug('————json方法：精确查找-错误：————%s' % e)
@@ -184,7 +189,7 @@ class SendRequest(object):
     def data_exact_search(self, datas, key):
         '''
         :param data: 嵌套字典、列表；dict、list；示例：{'code':0,'data':[{'name':'a'},{'name':'b'},{'name':'c'}]}
-        :param key:  查找条件；str；示例："data['data'][0][name]"
+        :param key:  查找条件；str；示例："$.['data'][0][name]"    ,jsonpath提取规则
         :return: 结果 = a
         '''
         logger.info('————进入精确提取：data方式————')
@@ -195,10 +200,10 @@ class SendRequest(object):
                 return None
         data = datas
         logger.debug('data方法：精确查找提取-数据源：%s,%s' % (type(data), data))
-        logger.debug('data方法：精确查找提取-查找条件：%s,%s' % (type(key), key))
+        logger.info('data方法：精确查找提取-查找条件：%s,%s' % (type(key), key))
         try:
-            res = eval(key)
-            logger.debug('————data方法：精确查找提取-开始查找————%s,%s' % (type(res), str(res)))
+            res = jsonpath(data, key)
+            logger.info('————data方法：精确查找提取-开始查找————%s,%s' % (type(res), str(res)))
         except:
             res = None
             logger.debug('data方法：精确查找提取-查找失败:%s,%s' % (type(res), res))
